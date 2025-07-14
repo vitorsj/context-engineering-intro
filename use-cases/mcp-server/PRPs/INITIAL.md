@@ -25,6 +25,8 @@ We need:
 
 All examples are already referenced in prp_mcp_base.md - do any additional research as needed.
 
+Claude Task Master GitHub repo: https://github.com/eyaltoledano/claude-task-master
+
 ## OTHER CONSIDERATIONS:
 
 - Do not use complex regex or complex parsing patterns, we use an LLM to parse PRPs.

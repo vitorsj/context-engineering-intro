@@ -43,7 +43,7 @@ with caching and rate limiting.
 Use the specialized MCP PRP command to create a comprehensive implementation plan:
 
 ```bash
-/prp-mcp-create INITIAL.md
+/prp-mcp-create PRPs/INITIAL.md
 ```
 
 **What this does:**
@@ -198,7 +198,7 @@ functionality, data sources, and user interactions.
 
 ```bash
 # Generate comprehensive PRP
-/prp-mcp-create INITIAL.md
+/prp-mcp-create PRPs/INITIAL.md
 
 # Execute the PRP to build your server
 /prp-mcp-execute PRPs/your-server-name.md
@@ -262,4 +262,4 @@ The goal is to make MCP server development predictable and successful through co
 
 ---
 
-**Ready to build your MCP server?** Start by editing `PRPs/INITIAL.md` and run `/prp-mcp-create INITIAL.md` to generate your comprehensive implementation plan.
+**Ready to build your MCP server?** Start by editing `PRPs/INITIAL.md` and run `/prp-mcp-create PRPs/INITIAL.md` to generate your comprehensive implementation plan.
