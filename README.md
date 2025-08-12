@@ -1,296 +1,362 @@
-# Context Engineering Template
+# Lawyerless - Análise de Contratos de Investimento
 
-A comprehensive template for getting started with Context Engineering - the discipline of engineering context for AI coding assistants so they have the information necessary to get the job done end to end.
+![Lawyerless](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 
-> **Context Engineering is 10x better than prompt engineering and 100x better than vibe coding.**
+Sistema inteligente para análise de contratos de investimento brasileiros com IA, processamento de PDF com coordenadas e explicações em português para leigos.
+
+## 🎯 Funcionalidades
+
+- **Análise Automática**: Análise cláusula por cláusula com IA (PydanticAI + OpenAI)
+- **Visualização PDF**: Viewer integrado com destaque sincronizado por coordenadas
+- **Bandeiras de Risco**: Sistema Verde/Amarelo/Vermelho para avaliação de riscos
+- **Explicações Simples**: Linguagem clara para leigos adultos
+- **Perguntas Estratégicas**: Até 5 perguntas de negociação por cláusula
+- **Suporte Brasileiro**: Documentos SAFE, mútuo conversível, term sheets, etc.
+- **Tempo Real**: Atualizações WebSocket durante o processamento
+- **API RESTful**: Endpoints completos para integração
 
 ## 🚀 Quick Start
 
-```bash
-# 1. Clone this template
-git clone https://github.com/coleam00/Context-Engineering-Intro.git
-cd Context-Engineering-Intro
+### Pré-requisitos
 
-# 2. Set up your project rules (optional - template provided)
-# Edit CLAUDE.md to add your project-specific guidelines
+- Python 3.13+
+- Node.js 18+
+- OpenAI API Key
+- Git
 
-# 3. Add examples (highly recommended)
-# Place relevant code examples in the examples/ folder
-
-# 4. Create your initial feature request
-# Edit INITIAL.md with your feature requirements
-
-# 5. Generate a comprehensive PRP (Product Requirements Prompt)
-# In Claude Code, run:
-/generate-prp INITIAL.md
-
-# 6. Execute the PRP to implement your feature
-# In Claude Code, run:
-/execute-prp PRPs/your-feature-name.md
-```
-
-## 📚 Table of Contents
-
-- [What is Context Engineering?](#what-is-context-engineering)
-- [Template Structure](#template-structure)
-- [Step-by-Step Guide](#step-by-step-guide)
-- [Writing Effective INITIAL.md Files](#writing-effective-initialmd-files)
-- [The PRP Workflow](#the-prp-workflow)
-- [Using Examples Effectively](#using-examples-effectively)
-- [Best Practices](#best-practices)
-
-## What is Context Engineering?
-
-Context Engineering represents a paradigm shift from traditional prompt engineering:
-
-### Prompt Engineering vs Context Engineering
-
-**Prompt Engineering:**
-- Focuses on clever wording and specific phrasing
-- Limited to how you phrase a task
-- Like giving someone a sticky note
-
-**Context Engineering:**
-- A complete system for providing comprehensive context
-- Includes documentation, examples, rules, patterns, and validation
-- Like writing a full screenplay with all the details
-
-### Why Context Engineering Matters
-
-1. **Reduces AI Failures**: Most agent failures aren't model failures - they're context failures
-2. **Ensures Consistency**: AI follows your project patterns and conventions
-3. **Enables Complex Features**: AI can handle multi-step implementations with proper context
-4. **Self-Correcting**: Validation loops allow AI to fix its own mistakes
-
-## Template Structure
-
-```
-context-engineering-intro/
-├── .claude/
-│   ├── commands/
-│   │   ├── generate-prp.md    # Generates comprehensive PRPs
-│   │   └── execute-prp.md     # Executes PRPs to implement features
-│   └── settings.local.json    # Claude Code permissions
-├── PRPs/
-│   ├── templates/
-│   │   └── prp_base.md       # Base template for PRPs
-│   └── EXAMPLE_multi_agent_prp.md  # Example of a complete PRP
-├── examples/                  # Your code examples (critical!)
-├── CLAUDE.md                 # Global rules for AI assistant
-├── INITIAL.md               # Template for feature requests
-├── INITIAL_EXAMPLE.md       # Example feature request
-└── README.md                # This file
-```
-
-This template doesn't focus on RAG and tools with context engineering because I have a LOT more in store for that soon. ;)
-
-## Step-by-Step Guide
-
-### 1. Set Up Global Rules (CLAUDE.md)
-
-The `CLAUDE.md` file contains project-wide rules that the AI assistant will follow in every conversation. The template includes:
-
-- **Project awareness**: Reading planning docs, checking tasks
-- **Code structure**: File size limits, module organization
-- **Testing requirements**: Unit test patterns, coverage expectations
-- **Style conventions**: Language preferences, formatting rules
-- **Documentation standards**: Docstring formats, commenting practices
-
-**You can use the provided template as-is or customize it for your project.**
-
-### 2. Create Your Initial Feature Request
-
-Edit `INITIAL.md` to describe what you want to build:
-
-```markdown
-## FEATURE:
-[Describe what you want to build - be specific about functionality and requirements]
-
-## EXAMPLES:
-[List any example files in the examples/ folder and explain how they should be used]
-
-## DOCUMENTATION:
-[Include links to relevant documentation, APIs, or MCP server resources]
-
-## OTHER CONSIDERATIONS:
-[Mention any gotchas, specific requirements, or things AI assistants commonly miss]
-```
-
-**See `INITIAL_EXAMPLE.md` for a complete example.**
-
-### 3. Generate the PRP
-
-PRPs (Product Requirements Prompts) are comprehensive implementation blueprints that include:
-
-- Complete context and documentation
-- Implementation steps with validation
-- Error handling patterns
-- Test requirements
-
-They are similar to PRDs (Product Requirements Documents) but are crafted more specifically to instruct an AI coding assistant.
-
-Run in Claude Code:
-```bash
-/generate-prp INITIAL.md
-```
-
-**Note:** The slash commands are custom commands defined in `.claude/commands/`. You can view their implementation:
-- `.claude/commands/generate-prp.md` - See how it researches and creates PRPs
-- `.claude/commands/execute-prp.md` - See how it implements features from PRPs
-
-The `$ARGUMENTS` variable in these commands receives whatever you pass after the command name (e.g., `INITIAL.md` or `PRPs/your-feature.md`).
-
-This command will:
-1. Read your feature request
-2. Research the codebase for patterns
-3. Search for relevant documentation
-4. Create a comprehensive PRP in `PRPs/your-feature-name.md`
-
-### 4. Execute the PRP
-
-Once generated, execute the PRP to implement your feature:
+### 1. Clone e Setup
 
 ```bash
-/execute-prp PRPs/your-feature-name.md
+git clone <repository-url>
+cd Lawerless
 ```
 
-The AI coding assistant will:
-1. Read all context from the PRP
-2. Create a detailed implementation plan
-3. Execute each step with validation
-4. Run tests and fix any issues
-5. Ensure all success criteria are met
+### 2. 🔑 Configurar API Token
 
-## Writing Effective INITIAL.md Files
+**⚠️ IMPORTANTE**: Você precisa configurar sua chave da OpenAI para que a análise de IA funcione.
 
-### Key Sections Explained
+#### Opção A: Arquivo .env (Recomendado)
 
-**FEATURE**: Be specific and comprehensive
-- ❌ "Build a web scraper"
-- ✅ "Build an async web scraper using BeautifulSoup that extracts product data from e-commerce sites, handles rate limiting, and stores results in PostgreSQL"
+Crie um arquivo `.env` na pasta `backend/`:
 
-**EXAMPLES**: Leverage the examples/ folder
-- Place relevant code patterns in `examples/`
-- Reference specific files and patterns to follow
-- Explain what aspects should be mimicked
+```bash
+# backend/.env
+LLM_API_KEY=sk-your-openai-api-key-here
+LLM_PROVIDER=openai
+LLM_MODEL=gpt-4o-mini
+LLM_BASE_URL=https://api.openai.com/v1
 
-**DOCUMENTATION**: Include all relevant resources
-- API documentation URLs
-- Library guides
-- MCP server documentation
-- Database schemas
-
-**OTHER CONSIDERATIONS**: Capture important details
-- Authentication requirements
-- Rate limits or quotas
-- Common pitfalls
-- Performance requirements
-
-## The PRP Workflow
-
-### How /generate-prp Works
-
-The command follows this process:
-
-1. **Research Phase**
-   - Analyzes your codebase for patterns
-   - Searches for similar implementations
-   - Identifies conventions to follow
-
-2. **Documentation Gathering**
-   - Fetches relevant API docs
-   - Includes library documentation
-   - Adds gotchas and quirks
-
-3. **Blueprint Creation**
-   - Creates step-by-step implementation plan
-   - Includes validation gates
-   - Adds test requirements
-
-4. **Quality Check**
-   - Scores confidence level (1-10)
-   - Ensures all context is included
-
-### How /execute-prp Works
-
-1. **Load Context**: Reads the entire PRP
-2. **Plan**: Creates detailed task list using TodoWrite
-3. **Execute**: Implements each component
-4. **Validate**: Runs tests and linting
-5. **Iterate**: Fixes any issues found
-6. **Complete**: Ensures all requirements met
-
-See `PRPs/EXAMPLE_multi_agent_prp.md` for a complete example of what gets generated.
-
-## Using Examples Effectively
-
-The `examples/` folder is **critical** for success. AI coding assistants perform much better when they can see patterns to follow.
-
-### What to Include in Examples
-
-1. **Code Structure Patterns**
-   - How you organize modules
-   - Import conventions
-   - Class/function patterns
-
-2. **Testing Patterns**
-   - Test file structure
-   - Mocking approaches
-   - Assertion styles
-
-3. **Integration Patterns**
-   - API client implementations
-   - Database connections
-   - Authentication flows
-
-4. **CLI Patterns**
-   - Argument parsing
-   - Output formatting
-   - Error handling
-
-### Example Structure
-
-```
-examples/
-├── README.md           # Explains what each example demonstrates
-├── cli.py             # CLI implementation pattern
-├── agent/             # Agent architecture patterns
-│   ├── agent.py      # Agent creation pattern
-│   ├── tools.py      # Tool implementation pattern
-│   └── providers.py  # Multi-provider pattern
-└── tests/            # Testing patterns
-    ├── test_agent.py # Unit test patterns
-    └── conftest.py   # Pytest configuration
+# Outras configurações opcionais
+DEBUG=true
+LOG_LEVEL=INFO
+MAX_FILE_SIZE=52428800  # 50MB
+PDF_MAX_PAGES=50
 ```
 
-## Best Practices
+#### Opção B: Variáveis de Ambiente
 
-### 1. Be Explicit in INITIAL.md
-- Don't assume the AI knows your preferences
-- Include specific requirements and constraints
-- Reference examples liberally
+```bash
+export LLM_API_KEY=sk-your-openai-api-key-here
+export LLM_PROVIDER=openai
+export LLM_MODEL=gpt-4o-mini
+```
 
-### 2. Provide Comprehensive Examples
-- More examples = better implementations
-- Show both what to do AND what not to do
-- Include error handling patterns
+#### Como Obter a API Key da OpenAI
 
-### 3. Use Validation Gates
-- PRPs include test commands that must pass
-- AI will iterate until all validations succeed
-- This ensures working code on first try
+1. Visite [platform.openai.com](https://platform.openai.com/)
+2. Faça login ou crie uma conta
+3. Vá em "API Keys" no menu
+4. Clique "Create new secret key"
+5. Copie a chave (formato: `sk-...`)
 
-### 4. Leverage Documentation
-- Include official API docs
-- Add MCP server resources
-- Reference specific documentation sections
+### 3. Backend Setup
 
-### 5. Customize CLAUDE.md
-- Add your conventions
-- Include project-specific rules
-- Define coding standards
+```bash
+cd backend
 
-## Resources
+# Criar ambiente virtual
+python -m venv venv_linux
+source venv_linux/bin/activate  # Linux/Mac
+# ou
+venv_linux\Scripts\activate     # Windows
 
-- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
-- [Context Engineering Best Practices](https://www.philschmid.de/context-engineering)
+# Instalar dependências
+pip install -r requirements.txt
+
+# Executar servidor
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 4. Frontend Setup
+
+```bash
+cd frontend
+
+# Instalar dependências
+npm install
+
+# Executar servidor de desenvolvimento
+npm run dev
+```
+
+### 5. Acessar Sistema
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+
+## 🏗️ Arquitetura
+
+```
+├── backend/          # FastAPI + PydanticAI
+│   ├── app/
+│   │   ├── agents/   # Agentes de análise com IA
+│   │   ├── services/ # PDF processing & clause segmentation
+│   │   ├── api/      # REST endpoints
+│   │   └── models/   # Pydantic models
+│   └── tests/        # Unit tests with pytest
+├── frontend/         # Next.js + PDF.js
+│   ├── src/
+│   │   ├── components/ # PDF viewer, analysis panels
+│   │   ├── hooks/      # React hooks for API
+│   │   └── utils/      # PDF.js configuration
+└── docker-compose.yml # Development environment
+```
+
+## 📋 Usando o Sistema
+
+### Upload e Análise
+
+1. Acesse http://localhost:3000
+2. Faça upload de um PDF de contrato brasileiro
+3. Selecione perspectiva (fundador/investidor)
+4. Acompanhe o progresso em tempo real
+5. Visualize a análise cláusula por cláusula
+
+### Via API
+
+```bash
+# Upload do PDF
+curl -X POST "http://localhost:8000/api/v1/analyze" \
+  -F "file=@contrato.pdf" \
+  -F "perspectiva=fundador"
+
+# Verificar status
+curl "http://localhost:8000/api/v1/analysis/{document_id}/status"
+
+# Obter resultado
+curl "http://localhost:8000/api/v1/analysis/{document_id}"
+```
+
+## 🧪 Testes
+
+```bash
+# Backend tests
+cd backend
+source venv_linux/bin/activate
+python -m pytest -v
+
+# Frontend build test
+cd frontend
+npm run build
+npm run type-check
+```
+
+## 🐳 Docker (Desenvolvimento)
+
+```bash
+# Subir todos os serviços
+docker-compose up -d
+
+# Logs
+docker-compose logs -f
+
+# Parar
+docker-compose down
+```
+
+## 📁 Documentos Suportados
+
+- **SAFE**: Simple Agreement for Future Equity
+- **Mútuo Conversível**: Contratos de empréstimo conversível
+- **Term Sheet**: Termos e condições de investimento
+- **Acordo de Acionistas/Quotistas**: Direitos e deveres societários
+- **Side Letters**: Acordos complementares
+
+## 🔧 Configuração Avançada
+
+### Backend Settings
+
+Edite `backend/app/settings.py` ou use variáveis de ambiente:
+
+```bash
+# API Configuration
+LLM_API_KEY=your-key
+LLM_PROVIDER=openai  # ou anthropic, azure
+LLM_MODEL=gpt-4o-mini
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MAX_RETRIES=3
+LLM_TIMEOUT=120
+
+# PDF Processing
+MAX_FILE_SIZE=52428800  # 50MB
+PDF_MAX_PAGES=50
+PDF_CHUNK_SIZE=4000
+PDF_CHUNK_OVERLAP=200
+
+# Server
+DEBUG=false
+LOG_LEVEL=INFO
+HOST=0.0.0.0
+PORT=8000
+
+# CORS
+CORS_ORIGINS=["http://localhost:3000"]
+```
+
+### Frontend Configuration
+
+Edite `frontend/next.config.js` para configuração do PDF.js:
+
+```javascript
+module.exports = {
+  // PDF.js worker configuration
+  serverComponentsExternalPackages: ['pdfjs-dist'],
+  // ... outras configurações
+}
+```
+
+## 🔍 Troubleshooting
+
+### Erro 401 na API OpenAI
+```
+❌ "invalid_api_key"
+✅ Verificar se LLM_API_KEY está configurado corretamente
+✅ Confirmar que a chave é válida no OpenAI dashboard
+```
+
+### PDF não carrega no frontend
+```
+❌ PDF.js worker error
+✅ Verificar se pdf-worker.js está em public/
+✅ Verificar configuração do Next.js
+```
+
+### Erro de CORS
+```
+❌ CORS policy error
+✅ Verificar CORS_ORIGINS no backend
+✅ Confirmar que frontend roda na porta correta
+```
+
+### Falha na segmentação de cláusulas
+```
+❌ Cláusulas não identificadas
+✅ Verificar padrões brasileiros em clause_segmenter.py
+✅ Testar com documento padrão (SAFE, term sheet)
+```
+
+## 📊 Monitoramento
+
+### Logs Importantes
+
+```bash
+# Backend logs
+tail -f backend/logs/app.log
+
+# Status da análise
+curl http://localhost:8000/api/v1/health
+
+# Métricas
+curl http://localhost:8000/api/v1/api/health
+```
+
+### Performance
+
+- **Tempo típico**: 10-30 segundos por documento
+- **Limite de páginas**: 50 páginas por PDF
+- **Limite de arquivo**: 50MB por upload
+- **Concurrent processing**: Até 5 documentos simultâneos
+
+## 🚀 Produção
+
+### Deploy Checklist
+
+- [ ] Configurar LLM_API_KEY production
+- [ ] Definir DEBUG=false
+- [ ] Configurar CORS_ORIGINS para domínio real
+- [ ] Configurar SSL/HTTPS
+- [ ] Configurar rate limiting
+- [ ] Configurar monitoring (logs, metrics)
+- [ ] Backup de dados de análise
+
+### Variáveis de Ambiente Produção
+
+```bash
+LLM_API_KEY=sk-prod-key-here
+DEBUG=false
+LOG_LEVEL=WARNING
+CORS_ORIGINS=["https://yourdomain.com"]
+MAX_FILE_SIZE=104857600  # 100MB
+```
+
+## 🤝 Desenvolvimento
+
+### Estrutura de Código
+
+```bash
+backend/app/
+├── agents/           # PydanticAI agents
+│   ├── contract_analyzer.py  # Main analysis agent
+│   ├── prompts.py            # System prompts
+│   └── tools.py              # Agent tools
+├── services/         # Core services
+│   ├── pdf_processor.py      # PDF extraction
+│   ├── clause_segmenter.py   # Brazilian patterns
+│   └── contract_extractor.py # Structured extraction
+├── api/             # REST endpoints
+│   └── routes.py    # FastAPI routes
+├── models/          # Pydantic models
+│   └── __init__.py  # All data models
+└── main.py          # FastAPI app
+```
+
+### Adicionando Novos Tipos de Documento
+
+1. Adicionar padrões em `clause_segmenter.py`
+2. Definir tipo em `models.py` (TipoInstrumento)
+3. Atualizar extractor em `contract_extractor.py`
+4. Adicionar prompts específicos em `prompts.py`
+
+## 📝 Changelog
+
+### v1.0.0 (Current)
+- ✅ Sistema completo de análise de contratos
+- ✅ Interface web com PDF viewer
+- ✅ Integração PydanticAI + OpenAI
+- ✅ Suporte completo a documentos brasileiros
+- ✅ API REST + WebSocket
+- ✅ Testes unitários
+- ✅ Docker development environment
+
+## 🆘 Suporte
+
+Para problemas ou dúvidas:
+
+1. Verificar este README
+2. Consultar logs do sistema
+3. Testar com documento exemplo
+4. Verificar configuração da API key
+
+## 📄 Licença
+
+MIT License - Veja LICENSE para detalhes.
+
+---
+
+**💡 Dica**: Para melhor performance, use documentos com texto selecionável (não escaneados). O sistema funciona melhor com contratos estruturados seguindo padrões brasileiros.
