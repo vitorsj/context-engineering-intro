@@ -71,18 +71,19 @@ def get_llm_model() -> OpenAIModel:
         raise ContractAnalysisError(f"LLM initialization failed: {e}") from e
 
 
-# Create the main contract analysis agent
-# Note: Structured output handled through system prompt and model capabilities
+# Create the main contract analysis agent with structured output
 contract_agent = Agent(
     get_llm_model(),
     deps_type=AnalysisDependencies,
+    output_type=ClauseAnalysis,  # Ensure structured output
     system_prompt=SYSTEM_PROMPT + "\n\n" + CLAUSE_ANALYSIS_EXAMPLES
 )
 
-# Create a separate agent for contract summary extraction (no result_type needed)
+# Create a separate agent for contract summary extraction with structured output
 summary_agent = Agent(
     get_llm_model(),
     deps_type=AnalysisDependencies,
+    output_type=ContractSummary,  # Ensure structured output
     system_prompt=CONTRACT_SUMMARY_PROMPT
 )
 
@@ -309,10 +310,23 @@ class ContractAnalyzer:
                 lambda: contract_agent.run(clause_prompt, deps=dependencies)
             )
             
-            # Extract analysis from result and ensure coordinates are preserved
-            analysis = result.data if hasattr(result, 'data') else result
-            if hasattr(analysis, 'coordenadas'):
-                analysis.coordenadas = clause.coordinates
+            # Extract analysis from result and ensure coordinates are preserved  
+            if hasattr(result, 'data'):
+                analysis = result.data
+            else:
+                # Fallback for direct result
+                analysis = result
+                
+            # Ensure we have a ClauseAnalysis object
+            if not isinstance(analysis, ClauseAnalysis):
+                logger.error(f"Expected ClauseAnalysis, got {type(analysis)}: {analysis}")
+                # Create fallback analysis
+                return self._create_fallback_analysis(clause, f"Invalid result type: {type(analysis)}")
+            
+            # Set coordinates and clause info
+            analysis.coordenadas = clause.coordinates
+            analysis.clause_id = clause.clause_id
+            analysis.clausula_numero = clause.clause_number
             
             logger.info(f"Clause analysis completed: {analysis.clause_id}, Flag: {analysis.bandeira}")
             return analysis

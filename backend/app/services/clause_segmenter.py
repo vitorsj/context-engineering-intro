@@ -55,19 +55,19 @@ class ClauseSegmenter:
         
         # Pattern 1: Numbered clauses (1., 1.1., 1.1.1., etc.)
         self.numbered_pattern = re.compile(
-            r'(?:^|\n)\s*(\d+(?:\.\d+)*)\.\s+([A-ZÁÊÇÕÜ][A-ZÁÉÍÓÚÀÂÊÔÇÕÜa-záéíóúàâêôçõü\s]{0,100}?)(?:\n|$)',
+            r'^(\d+(?:\.\d+)*)\.\s+([A-Z][^\n]*?)(?:\s*)$',
             re.MULTILINE | re.IGNORECASE
         )
         
         # Pattern 2: "CLÁUSULA" patterns
         self.clausula_pattern = re.compile(
-            r'(?:^|\n)\s*(?:CLÁUSULA|CLAUSULA)\s*(\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-ZÁÊÇÕÜ][A-ZÁÉÍÓÚÀÂÊÔÇÕÜa-záéíóúàâêôçõü\s]{0,100}?)(?:\n|$)',
+            r'^\s*(?:CLÁUSULA|CLAUSULA)\s*(\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-Z][^\n]*?)(?:\s*)$',
             re.MULTILINE | re.IGNORECASE
         )
         
         # Pattern 3: "SEÇÃO" patterns
         self.secao_pattern = re.compile(
-            r'(?:^|\n)\s*(?:SEÇÃO|SECAO|SEÇÃO)\s*(\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-ZÁÊÇÕÜ][A-ZÁÉÍÓÚÀÂÊÔÇÕÜa-záéíóúàâêôçõü\s]{0,100}?)(?:\n|$)',
+            r'^\s*(?:SEÇÃO|SECAO)\s*([IVXLCDM]+|\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-Z][^\n]*?)(?:\s*)$',
             re.MULTILINE | re.IGNORECASE
         )
         
@@ -189,13 +189,14 @@ class ClauseSegmenter:
         matches = self.clausula_pattern.finditer(text)
         for match in matches:
             confidence = 0.95  # Very high confidence for explicit clauses
+            number = match.group(1) if match.group(1) else None
             all_matches.append(ClauseMatch(
                 start_pos=match.start(),
                 end_pos=match.end(),
                 text=match.group(0),
                 title=match.group(2).strip() if match.group(2) else None,
-                number=match.group(1) if match.group(1) else None,
-                level=1,
+                number=number,
+                level=self._calculate_hierarchical_level(number, "clausula"),
                 pattern_type="clausula",
                 confidence=confidence
             ))
@@ -204,13 +205,14 @@ class ClauseSegmenter:
         matches = self.secao_pattern.finditer(text)
         for match in matches:
             confidence = 0.85
+            number = match.group(1) if match.group(1) else None
             all_matches.append(ClauseMatch(
                 start_pos=match.start(),
                 end_pos=match.end(),
                 text=match.group(0),
                 title=match.group(2).strip() if match.group(2) else None,
-                number=match.group(1) if match.group(1) else None,
-                level=1,
+                number=number,
+                level=self._calculate_hierarchical_level(number, "secao"),
                 pattern_type="secao",
                 confidence=confidence
             ))
@@ -221,13 +223,14 @@ class ClauseSegmenter:
             # Only include if it looks like a section header
             if self._is_likely_section_header(match.group(2) or ""):
                 confidence = 0.7
+                number = match.group(1)
                 all_matches.append(ClauseMatch(
                     start_pos=match.start(),
                     end_pos=match.end(),
                     text=match.group(0),
                     title=match.group(2).strip() if match.group(2) else None,
-                    number=match.group(1),
-                    level=1,
+                    number=number,
+                    level=self._calculate_hierarchical_level(number, "roman"),
                     pattern_type="roman",
                     confidence=confidence
                 ))
@@ -236,13 +239,14 @@ class ClauseSegmenter:
         matches = self.artigo_pattern.finditer(text)
         for match in matches:
             confidence = 0.8
+            number = match.group(1) if match.group(1) else None
             all_matches.append(ClauseMatch(
                 start_pos=match.start(),
                 end_pos=match.end(),
                 text=match.group(0),
                 title=match.group(2).strip() if match.group(2) else None,
-                number=match.group(1) if match.group(1) else None,
-                level=1,
+                number=number,
+                level=self._calculate_hierarchical_level(number, "artigo"),
                 pattern_type="artigo",
                 confidence=confidence
             ))
@@ -251,13 +255,14 @@ class ClauseSegmenter:
         matches = self.paragrafo_pattern.finditer(text)
         for match in matches:
             confidence = 0.6
+            number = match.group(1) if match.group(1) else None
             all_matches.append(ClauseMatch(
                 start_pos=match.start(),
                 end_pos=match.end(),
                 text=match.group(0),
                 title=match.group(2).strip() if match.group(2) else None,
-                number=match.group(1) if match.group(1) else None,
-                level=2,  # Paragraphs are typically sub-clauses
+                number=number,
+                level=self._calculate_hierarchical_level(number, "paragraph"),
                 pattern_type="paragrafo",
                 confidence=confidence
             ))
@@ -266,13 +271,14 @@ class ClauseSegmenter:
         matches = self.letter_pattern.finditer(text)
         for match in matches:
             confidence = 0.5  # Lower confidence as letters can be part of text
+            number = match.group(1)
             all_matches.append(ClauseMatch(
                 start_pos=match.start(),
                 end_pos=match.end(),
                 text=match.group(0),
                 title=match.group(2).strip() if match.group(2) else None,
-                number=match.group(1),
-                level=3,  # Letter subsections are typically deeper
+                number=number,
+                level=self._calculate_hierarchical_level(number, "letter"),
                 pattern_type="letter",
                 confidence=confidence
             ))
@@ -281,6 +287,27 @@ class ClauseSegmenter:
         filtered_matches = self._remove_overlapping_matches(all_matches)
         
         return filtered_matches
+    
+    def _calculate_hierarchical_level(self, number: str, pattern_type: str) -> int:
+        """Calculate the hierarchical level based on numbering pattern."""
+        if not number:
+            # Default levels for non-numbered patterns
+            level_map = {
+                "clausula": 1,    # "CLÁUSULA" patterns are top-level
+                "secao": 1,       # "SEÇÃO" patterns are top-level  
+                "artigo": 1,      # "ARTIGO" patterns are top-level
+                "roman": 1,       # Roman numerals are typically top-level
+                "paragraph": 2,    # Paragraphs are sub-level
+                "letter": 3        # Letter subsections are deeper
+            }
+            return level_map.get(pattern_type, 1)
+        
+        # For numbered patterns, count the dots
+        if '.' in number:
+            return len(number.split('.'))
+        
+        # Single numbers are level 1
+        return 1
     
     def _is_likely_section_header(self, text: str) -> bool:
         """
@@ -295,6 +322,10 @@ class ClauseSegmenter:
         if not text or len(text) > 100:
             return False
         
+        # Reject if it's too long or contains typical sentence patterns
+        if len(text) > 50 or ' que ' in text.lower() or ' para ' in text.lower():
+            return False
+            
         text_upper = text.upper()
         
         # Check for common section keywords
@@ -302,18 +333,18 @@ class ClauseSegmenter:
             if re.search(pattern, text_upper):
                 return True
         
-        # Check for other indicators
+        # Check for other indicators (using word boundaries)
         header_indicators = [
-            'DO ', 'DA ', 'DOS ', 'DAS ',  # Portuguese articles
-            'SOBRE ', 'ACERCA ',
-            'TERMO ', 'ACORDO ',
-            'VALOR ', 'PRAZO ',
-            'FORMA ', 'MODO ',
-            'CONDIÇOES', 'CONDIÇÕES'
+            r'\bDO\b', r'\bDA\b', r'\bDOS\b', r'\bDAS\b',  # Portuguese articles
+            r'\bSOBRE\b', r'\bACERCA\b',
+            r'\bTERMO\b', r'\bACORDO\b',
+            r'\bVALOR\b', r'\bPRAZO\b',
+            r'\bFORMA\b', r'\bMODO\b',
+            r'\bCONDIÇÕES\b', r'\bCONDICOES\b'
         ]
         
-        for indicator in header_indicators:
-            if indicator in text_upper:
+        for pattern in header_indicators:
+            if re.search(pattern, text_upper):
                 return True
         
         return False
@@ -576,9 +607,12 @@ class ClauseSegmenter:
         clause_id = f"single_clause_{extraction_result.document_id}"
         
         # Use first temporary clause coordinates if available
-        if extraction_result.clauses:
-            coordinates = extraction_result.clauses[0].coordinates
-        else:
+        try:
+            if extraction_result.clauses and len(extraction_result.clauses) > 0:
+                coordinates = extraction_result.clauses[0].coordinates
+            else:
+                raise IndexError("No clauses available")
+        except (IndexError, TypeError, AttributeError):
             coordinates = BoundingBox(
                 x0=0,
                 x1=612,
