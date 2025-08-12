@@ -54,20 +54,21 @@ class ClauseSegmenter:
         """Compile regular expressions for clause detection."""
         
         # Pattern 1: Numbered clauses (1., 1.1., 1.1.1., etc.)
+        # Enhanced to work with both line-based and continuous text
         self.numbered_pattern = re.compile(
-            r'^(\d+(?:\.\d+)*)\.\s+([A-Z][^\n]*?)(?:\s*)$',
+            r'(?:^|\s)(\d+(?:\.\d+)*)\.\s+([A-ZÁÊÇÕÜ][^\n.]*?)(?=\s*(?:\d+(?:\.\d+)*\.|CLÁUSULA|SEÇÃO|$))',
             re.MULTILINE | re.IGNORECASE
         )
         
-        # Pattern 2: "CLÁUSULA" patterns
+        # Pattern 2: "CLÁUSULA" patterns - Enhanced for continuous text
         self.clausula_pattern = re.compile(
-            r'^\s*(?:CLÁUSULA|CLAUSULA)\s*(\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-Z][^\n]*?)(?:\s*)$',
+            r'(?:^|\s)(?:CLÁUSULA|CLAUSULA)\s*(\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-ZÁÊÇÕÜ][^\n]*?)(?=\s*(?:\d+(?:\.\d+)*\.|CLÁUSULA|SEÇÃO|$))',
             re.MULTILINE | re.IGNORECASE
         )
         
-        # Pattern 3: "SEÇÃO" patterns
+        # Pattern 3: "SEÇÃO" patterns - Enhanced for continuous text
         self.secao_pattern = re.compile(
-            r'^\s*(?:SEÇÃO|SECAO)\s*([IVXLCDM]+|\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-Z][^\n]*?)(?:\s*)$',
+            r'(?:^|\s)(?:SEÇÃO|SECAO)\s*([IVXLCDM]+|\d+(?:\.\d+)*)?[ªº]?\s*[-–—]?\s*([A-ZÁÊÇÕÜ][^\n]*?)(?=\s*(?:\d+(?:\.\d+)*\.|CLÁUSULA|SEÇÃO|$))',
             re.MULTILINE | re.IGNORECASE
         )
         

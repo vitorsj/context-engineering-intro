@@ -156,6 +156,10 @@ class PDFProcessor:
                     page_text = "\n".join(fragment.text for fragment in page_fragments)
                     full_text += f"\n\n--- Página {page_num + 1} ---\n\n" + page_text
                     
+                    # Debug logging for text structure
+                    logger.debug(f"Page {page_num + 1} extracted {len(page_fragments)} fragments")
+                    logger.debug(f"Page {page_num + 1} text preview: {page_text[:200]}...")
+                    
                 except Exception as page_error:
                     warning = f"Failed to process page {page_num + 1}: {str(page_error)}"
                     warnings.append(warning)
@@ -263,7 +267,7 @@ class PDFProcessor:
         self, 
         words: List[Dict], 
         page_height: float,
-        tolerance: float = 2.0
+        tolerance: float = 5.0  # Increased tolerance for better line grouping
     ) -> List[Dict]:
         """
         Group words into lines based on vertical position.

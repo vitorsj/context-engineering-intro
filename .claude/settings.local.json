@@ -29,7 +29,8 @@
       "Bash(cd:*)",
       "Bash(npm run dev:*)",
       "Bash(pip uninstall:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

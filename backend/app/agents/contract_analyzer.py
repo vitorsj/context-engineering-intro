@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.openai import OpenAIModel
 
 from ..models import (
     ClauseAnalysis,
@@ -24,6 +23,7 @@ from ..models import (
     PDFExtractionResult
 )
 from ..settings import settings
+from ..services.llm_providers import get_llm_model
 from .prompts import SYSTEM_PROMPT, CONTRACT_SUMMARY_PROMPT, CLAUSE_ANALYSIS_EXAMPLES
 from .tools import (
     define_legal_term,
@@ -46,6 +46,7 @@ class AnalysisDependencies:
     include_negotiation_questions: bool = True
     session_id: Optional[str] = None
     user_context: Optional[Dict[str, Any]] = None
+    llm_provider: Optional[str] = None  # Provider override for this analysis
 
 
 class ContractAnalysisError(Exception):
@@ -53,19 +54,10 @@ class ContractAnalysisError(Exception):
     pass
 
 
-def get_llm_model() -> OpenAIModel:
-    """Get configured LLM model from settings."""
+def get_contract_llm_model(provider_name: Optional[str] = None):
+    """Get configured LLM model from settings with provider selection."""
     try:
-        # Set environment variables for OpenAI client
-        import os
-        os.environ["OPENAI_API_KEY"] = settings.llm_api_key
-        if settings.llm_base_url:
-            os.environ["OPENAI_BASE_URL"] = settings.llm_base_url
-        
-        return OpenAIModel(
-            settings.llm_model,
-            provider='openai'
-        )
+        return get_llm_model(provider_name)
     except Exception as e:
         logger.error(f"Failed to initialize LLM model: {e}")
         raise ContractAnalysisError(f"LLM initialization failed: {e}") from e
@@ -73,7 +65,7 @@ def get_llm_model() -> OpenAIModel:
 
 # Create the main contract analysis agent with structured output
 contract_agent = Agent(
-    get_llm_model(),
+    get_contract_llm_model(),
     deps_type=AnalysisDependencies,
     output_type=ClauseAnalysis,  # Ensure structured output
     system_prompt=SYSTEM_PROMPT + "\n\n" + CLAUSE_ANALYSIS_EXAMPLES
@@ -81,7 +73,7 @@ contract_agent = Agent(
 
 # Create a separate agent for contract summary extraction with structured output
 summary_agent = Agent(
-    get_llm_model(),
+    get_contract_llm_model(),
     deps_type=AnalysisDependencies,
     output_type=ContractSummary,  # Ensure structured output
     system_prompt=CONTRACT_SUMMARY_PROMPT
@@ -207,12 +199,13 @@ class ContractAnalyzer:
     output generation with Portuguese explanations.
     """
     
-    def __init__(self):
-        """Initialize contract analyzer."""
+    def __init__(self, llm_provider: Optional[str] = None):
+        """Initialize contract analyzer with optional provider override."""
         self.chunk_size = settings.pdf_chunk_size
         self.chunk_overlap = settings.pdf_chunk_overlap
         self.max_retries = settings.llm_max_retries
         self.timeout = settings.llm_timeout
+        self.llm_provider = llm_provider  # Provider override
     
     async def analyze_full_contract(
         self,
@@ -242,7 +235,8 @@ class ContractAnalyzer:
             document_id=extraction_result.document_id,
             perspectiva=perspectiva,
             include_risk_analysis=True,
-            include_negotiation_questions=True
+            include_negotiation_questions=True,
+            llm_provider=self.llm_provider
         )
         
         try:
@@ -267,7 +261,7 @@ class ContractAnalyzer:
                 total_clauses=len(analyzed_clauses),
                 processing_time=processing_time,
                 llm_provider=settings.llm_provider,
-                llm_model=settings.llm_model,
+                llm_model=settings.get_current_model(),
                 confidence_score=confidence_score,
                 risk_summary=risk_summary,
                 created_at=datetime.now()
@@ -305,13 +299,28 @@ class ContractAnalyzer:
             # Prepare the prompt with clause information
             clause_prompt = self._prepare_clause_prompt(clause, dependencies, context)
             
+            # Create agent with appropriate provider if specified
+            agent_to_use = contract_agent
+            if dependencies.llm_provider and dependencies.llm_provider != settings.llm_provider:
+                # Create temporary agent with different provider
+                agent_to_use = Agent(
+                    get_contract_llm_model(dependencies.llm_provider),
+                    deps_type=AnalysisDependencies,
+                    output_type=ClauseAnalysis,
+                    system_prompt=SYSTEM_PROMPT + "\n\n" + CLAUSE_ANALYSIS_EXAMPLES
+                )
+                # Register tools with temporary agent
+                self._register_tools_with_agent(agent_to_use)
+            
             # Run analysis with retry logic
             result = await self._run_with_retry(
-                lambda: contract_agent.run(clause_prompt, deps=dependencies)
+                lambda: agent_to_use.run(clause_prompt, deps=dependencies)
             )
             
             # Extract analysis from result and ensure coordinates are preserved  
-            if hasattr(result, 'data'):
+            if hasattr(result, 'output'):
+                analysis = result.output
+            elif hasattr(result, 'data'):
                 analysis = result.data
             else:
                 # Fallback for direct result
@@ -388,6 +397,33 @@ class ContractAnalyzer:
                     analyzed_clauses.append(fallback)
         
         return analyzed_clauses
+    
+    def _register_tools_with_agent(self, agent):
+        """Register tools with a dynamic agent."""
+        # Register the same tools as the main contract_agent
+        @agent.tool
+        def get_legal_term_definition(ctx, term: str) -> str:
+            return define_legal_term(ctx, term)
+        
+        @agent.tool
+        def analyze_risk_patterns(ctx, clause_text: str, clause_type: str = "") -> Dict[str, Any]:
+            return analyze_clause_risk_factors(ctx, clause_text, clause_type)
+        
+        @agent.tool  
+        def compare_to_market(ctx, term_type: str, value: float) -> Dict[str, Any]:
+            return compare_with_market_standards(ctx, term_type, value)
+        
+        @agent.tool
+        def get_negotiation_questions(ctx, category: str, context: Optional[Dict[str, Any]] = None) -> List[str]:
+            return generate_negotiation_questions(ctx, category, context)
+        
+        @agent.tool
+        def identify_clause_type(ctx, clause_text: str, clause_title: str = "") -> str:
+            return identify_clause_category(ctx, clause_text, clause_title)
+        
+        @agent.tool
+        def extract_numbers(ctx, text: str) -> Dict[str, List[float]]:
+            return extract_numeric_values(ctx, text)
     
     def _prepare_clause_prompt(
         self,
@@ -515,7 +551,8 @@ async def analyze_contract_clauses(
     extraction_result: PDFExtractionResult,
     clauses: List[ProcessedClause],
     contract_summary: ContractSummary,
-    perspectiva: str = "fundador"
+    perspectiva: str = "fundador",
+    llm_provider: Optional[str] = None
 ) -> ContractAnalysisResponse:
     """
     Convenience function to analyze contract clauses.
@@ -525,11 +562,12 @@ async def analyze_contract_clauses(
         clauses: List of processed clauses
         contract_summary: Contract summary
         perspectiva: Analysis perspective
+        llm_provider: LLM provider override
     
     Returns:
         Complete contract analysis response
     """
-    analyzer = ContractAnalyzer()
+    analyzer = ContractAnalyzer(llm_provider=llm_provider)
     return await analyzer.analyze_full_contract(
         extraction_result, 
         clauses, 
@@ -541,7 +579,8 @@ async def analyze_contract_clauses(
 async def analyze_single_contract_clause(
     clause: ProcessedClause,
     document_id: str,
-    perspectiva: str = "fundador"
+    perspectiva: str = "fundador",
+    llm_provider: Optional[str] = None
 ) -> ClauseAnalysis:
     """
     Convenience function to analyze a single clause.
@@ -550,14 +589,16 @@ async def analyze_single_contract_clause(
         clause: Clause to analyze
         document_id: Document identifier
         perspectiva: Analysis perspective
+        llm_provider: LLM provider override
     
     Returns:
         Clause analysis result
     """
-    analyzer = ContractAnalyzer()
+    analyzer = ContractAnalyzer(llm_provider=llm_provider)
     dependencies = AnalysisDependencies(
         document_id=document_id,
-        perspectiva=perspectiva
+        perspectiva=perspectiva,
+        llm_provider=llm_provider
     )
     
     return await analyzer.analyze_single_clause(clause, dependencies)

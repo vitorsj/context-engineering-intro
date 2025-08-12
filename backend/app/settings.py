@@ -21,11 +21,24 @@ class Settings(BaseSettings):
         case_sensitive=False
     )
     
-    # LLM Configuration
-    llm_provider: str = Field(default="openai")
-    llm_api_key: str = Field(...)
-    llm_model: str = Field(default="gpt-4o-mini")
-    llm_base_url: Optional[str] = Field(default="https://api.openai.com/v1")
+    # LLM Provider Selection
+    llm_provider: str = Field(default="openai")  # "openai" or "llm_studio"
+    
+    # OpenAI Configuration
+    openai_api_key: Optional[str] = Field(default=None)
+    openai_model: str = Field(default="gpt-4o-mini")
+    openai_base_url: str = Field(default="https://api.openai.com/v1")
+    openai_timeout: int = Field(default=120)
+    
+    # LM Studio Configuration (Local LLM Server - no API key needed)
+    lm_studio_model: str = Field(default="llama-3.1-8b-instruct")
+    lm_studio_base_url: str = Field(default="http://localhost:1234/v1")
+    lm_studio_timeout: int = Field(default=180)
+    
+    # Legacy fields for backward compatibility
+    llm_api_key: Optional[str] = Field(default=None)
+    llm_model: Optional[str] = Field(default=None)
+    llm_base_url: Optional[str] = Field(default=None)
     
     # FastAPI Configuration
     app_name: str = Field(default="Lawyerless API")
@@ -73,13 +86,54 @@ class Settings(BaseSettings):
     risk_analysis_enabled: bool = Field(default=True)
     negotiation_questions_count: int = Field(default=5)
     
-    @field_validator("llm_api_key")
+    @field_validator("llm_provider")
     @classmethod
-    def validate_api_key(cls, v):
-        """Ensure API key is not empty."""
-        if not v or v.strip() == "":
-            raise ValueError("LLM API key cannot be empty")
+    def validate_provider(cls, v):
+        """Ensure provider is supported."""
+        supported_providers = ["openai", "lm_studio"]
+        if v not in supported_providers:
+            raise ValueError(f"LLM provider must be one of: {supported_providers}")
         return v
+    
+    def get_current_api_key(self) -> Optional[str]:
+        """Get API key for current provider (None for LM Studio)."""
+        if self.llm_provider == "openai":
+            key = self.openai_api_key or self.llm_api_key
+            if not key or key.strip() == "":
+                raise ValueError(f"API key not configured for OpenAI provider")
+            return key
+        elif self.llm_provider == "lm_studio":
+            # LM Studio runs locally - no API key needed
+            return "lm-studio-local"  # Placeholder for OpenAI client compatibility
+        else:
+            raise ValueError(f"Unknown provider: {self.llm_provider}")
+    
+    def get_current_model(self) -> str:
+        """Get model for current provider."""
+        if self.llm_provider == "openai":
+            return self.llm_model or self.openai_model
+        elif self.llm_provider == "lm_studio":
+            return self.llm_model or self.lm_studio_model
+        else:
+            raise ValueError(f"Unknown provider: {self.llm_provider}")
+    
+    def get_current_base_url(self) -> str:
+        """Get base URL for current provider."""
+        if self.llm_provider == "openai":
+            return self.llm_base_url or self.openai_base_url
+        elif self.llm_provider == "lm_studio":
+            return self.llm_base_url or self.lm_studio_base_url
+        else:
+            raise ValueError(f"Unknown provider: {self.llm_provider}")
+    
+    def get_current_timeout(self) -> int:
+        """Get timeout for current provider."""
+        if self.llm_provider == "openai":
+            return self.openai_timeout
+        elif self.llm_provider == "lm_studio":
+            return self.lm_studio_timeout
+        else:
+            return self.llm_timeout
     
     @field_validator("max_file_size")
     @classmethod
@@ -111,8 +165,9 @@ class Settings(BaseSettings):
 # Global settings instance
 try:
     settings = Settings()
-except Exception:
+except Exception as e:
     # For testing, create settings with dummy values
     import os
-    os.environ.setdefault("LLM_API_KEY", "test_key")
+    os.environ.setdefault("OPENAI_API_KEY", "test_key")
+    # LM Studio doesn't need API keys
     settings = Settings()
